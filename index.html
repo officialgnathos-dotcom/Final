@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MODEL WEEKLY SYSTEM</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #191919;
+    --border: #2a2a2a;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --accent3: #47c8ff;
+    --accent4: #c847ff;
+    --text: #f0f0f0;
+    --muted: #666;
+    --pill-bg: #1e1e1e;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* HEADER */
+  header {
+    position: relative;
+    padding: 60px 24px 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 60%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .header-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 4px 12px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    animation: fadeUp 0.6s ease both;
+  }
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 12vw, 110px);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    color: var(--text);
+    animation: fadeUp 0.7s ease 0.1s both;
+  }
+  header h1 span { color: var(--accent); }
+  .header-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    margin-top: 16px;
+    animation: fadeUp 0.7s ease 0.2s both;
+  }
+
+  /* FORMULA BAR */
+  .formula {
+    background: var(--accent);
+    color: #000;
+    text-align: center;
+    padding: 12px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(10px, 2vw, 13px);
+    font-weight: 700;
+    letter-spacing: 1px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  /* NAV PILLS */
+  .day-nav {
+    display: flex;
+    gap: 8px;
+    padding: 20px 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 41px;
+    z-index: 90;
+    background: var(--bg);
+  }
+  .day-nav::-webkit-scrollbar { display: none; }
+  .day-pill {
+    flex-shrink: 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+  .day-pill:hover, .day-pill.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232,255,71,0.06);
+  }
+  .day-pill.rest { border-color: #333; color: #555; }
+
+  /* MAIN LAYOUT */
+  main { padding: 0 16px 80px; max-width: 960px; margin: 0 auto; }
+
+  /* DAY BLOCK */
+  .day-block {
+    margin-top: 48px;
+    animation: fadeUp 0.5s ease both;
+  }
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .day-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .day-focus {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .day-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--border);
+    margin-left: auto;
+  }
+
+  /* SLOT GRID */
+  .slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .slot {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .slot:hover {
+    border-color: #444;
+    transform: translateY(-1px);
+  }
+  .slot::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+  }
+  .slot.morning::before { background: #ffcc47; }
+  .slot.workout::before { background: #ff6b35; }
+  .slot.nutrition::before { background: #47ff8c; }
+  .slot.face::before { background: #c847ff; }
+  .slot.skin::before { background: #47c8ff; }
+  .slot.height::before { background: #ff4747; }
+  .slot.supps::before { background: #ffa047; }
+  .slot.night::before { background: #8c47ff; }
+  .slot.evening::before { background: #47ffe0; }
+  .slot.rest::before { background: #333; }
+  .slot.neck::before { background: #ff4fa3; }
+
+  .slot-time {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .slot-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1;
+  }
+  .task-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .task-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .task-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-top: 7px;
+    flex-shrink: 0;
+  }
+  .task-dot.orange { background: var(--accent2); }
+  .task-dot.blue { background: var(--accent3); }
+  .task-dot.purple { background: var(--accent4); }
+  .task-dot.red { background: #ff4747; }
+  .task-dot.green { background: #47ff8c; }
+
+  .task-text { font-size: 13px; line-height: 1.5; color: #ccc; }
+  .task-text strong { color: var(--text); font-weight: 600; }
+  .task-why {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-style: italic;
+  }
+
+  /* TAG BADGES */
+  .slot-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    padding: 2px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  /* WIDE SLOT */
+  .slot.wide {
+    grid-column: 1 / -1;
+  }
+
+  /* TIMELINE SLOT */
+  .timeline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .tl-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    font-size: 12px;
+    color: #bbb;
+    border-radius: 2px;
+  }
+  .tl-item span { color: var(--accent); font-weight: 600; }
+
+  /* REST DAY */
+  .rest-block {
+    text-align: center;
+    padding: 60px 24px;
+    border: 1px dashed var(--border);
+    margin-top: 0;
+  }
+  .rest-big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    color: #2a2a2a;
+    letter-spacing: 4px;
+    display: block;
+  }
+  .rest-msg { font-size: 13px; color: var(--muted); margin-top: 12px; line-height: 1.8; }
+
+  /* REALITY CHECK */
+  .reality-section {
+    margin-top: 60px;
+    border: 1px solid var(--border);
+    padding: 32px;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+  }
+  .reality-section::after {
+    content: 'REALITY';
+    position: absolute;
+    right: -20px; top: -10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 100px;
+    color: rgba(255,255,255,0.02);
+    pointer-events: none;
+  }
+  .reality-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--accent2);
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+  }
+  .reality-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .reality-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+  .reality-card .week { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--accent); letter-spacing: 2px; margin-bottom: 6px; }
+  .reality-card .desc { font-size: 13px; color: #bbb; }
+
+  /* NEVER DO */
+  .never-section {
+    margin-top: 20px;
+    padding: 24px 32px;
+    background: rgba(255, 71, 71, 0.04);
+    border: 1px solid rgba(255, 71, 71, 0.2);
+  }
+  .never-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    color: #ff4747;
+    margin-bottom: 14px;
+    letter-spacing: 2px;
+  }
+  .never-list { display: flex; flex-wrap: wrap; gap: 10px; }
+  .never-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    border: 1px solid rgba(255,71,71,0.3);
+    color: #ff7070;
+    letter-spacing: 1px;
+  }
+
+  /* SCROLL FADE ANIM */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SEPARATOR */
+  .sep {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 40px 0;
+  }
+
+  /* FOUNDATION BAR */
+  .foundation {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .foundation-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+  .foundation-items {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .foundation-item {
+    font-size: 12px;
+    color: #bbb;
+    background: var(--surface2);
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+  }
+
+  /* PROTEIN TARGET BAR */
+  .protein-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid #47ff8c;
+    padding: 12px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .protein-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: #47ff8c;
+    flex-shrink: 0;
+  }
+  .protein-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .protein-item {
+    font-size: 12px; color: #bbb;
+    background: var(--surface2);
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+  }
+  .protein-item strong { color: #47ff8c; }
+
+  /* PROGRESS TRACKER */
+  .tracker-section {
+    margin-top: 60px;
+    border: 1px solid var(--border);
+    padding: 32px;
+    background: var(--surface);
+  }
+  .tracker-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .tracker-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    margin-bottom: 24px;
+  }
+  .tracker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .tracker-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+  .tracker-card-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .tracker-card-metric {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .tracker-card-tip {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.5;
+  }
+  .tracker-weeks {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .week-box {
+    width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .week-box:hover { border-color: var(--accent); color: var(--accent); }
+  .week-box.done { background: rgba(232,255,71,0.1); border-color: var(--accent); color: var(--accent); }
+
+  /* MOBILE */
+  @media (max-width: 600px) {
+    .slot-grid { grid-template-columns: 1fr; }
+    header h1 { font-size: 58px; }
+    .day-label { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-tag">No Cope · No Skip · No Excuses</div>
+  <h1>MODEL<br><span>WEEKLY</span><br>SYSTEM</h1>
+  <p class="header-sub">Face · Metabolism · Skin · Height · All Covered</p>
+</header>
+
+<div class="formula">
+  MEWING + LOW FAT + NO PUFFINESS + GOOD POSTURE + 80-100G PROTEIN + SLEEP + NIACINAMIDE = MODEL FACE & BODY
+</div>
+
+<nav class="day-nav">
+  <a class="day-pill active" href="#mon">MON</a>
+  <a class="day-pill" href="#tue">TUE</a>
+  <a class="day-pill" href="#wed">WED</a>
+  <a class="day-pill" href="#thu">THU</a>
+  <a class="day-pill" href="#fri">FRI</a>
+  <a class="day-pill" href="#sat">SAT</a>
+  <a class="day-pill rest" href="#sun">SUN ◌</a>
+</nav>
+
+<main>
+
+  <!-- PROTEIN TARGET BAR -->
+  <div class="protein-bar">
+    <span class="protein-label">🥩 Daily Protein Target</span>
+    <div class="protein-items">
+      <span class="protein-item">Target: <strong>80–100g/day</strong></span>
+      <span class="protein-item">3 eggs = <strong>18g</strong></span>
+      <span class="protein-item">100g paneer = <strong>18g</strong></span>
+      <span class="protein-item">1 cup dal = <strong>9g</strong></span>
+      <span class="protein-item">100g chicken = <strong>27g</strong></span>
+      <span class="protein-item">1 cup milk = <strong>8g</strong></span>
+      <span class="protein-item">Sattu 30g = <strong>11g</strong></span>
+    </div>
+  </div>
+
+  <!-- FOUNDATION - ALWAYS ON -->
+  <div>
+    <div class="foundation">
+      <span class="foundation-label">24/7 Foundation</span>
+      <div class="foundation-items">
+        <span class="foundation-item">👅 Mewing — tongue full roof pe, back third bhi</span>
+        <span class="foundation-item">🔒 Suction Hold — tongue roof se chipkao, negative pressure banao</span>
+        <span class="foundation-item">👃 Sirf nose breathing — 24/7, gym mein bhi</span>
+        <span class="foundation-item">🧍 Posture — chin back, chest up, shoulders back</span>
+        <span class="foundation-item">💧 3–4L paani daily — 500ml uthke, 500ml workout se pehle, rest throughout</span>
+        <span class="foundation-item">😴 Back pe so — side sleeping = asymmetry</span>
+        <span class="foundation-item">🦴 Hard foods chew (gajar/apple/roasted chana) — jaw bone density + facial structure, dono side equal</span>
+        <span class="foundation-item">🍋 Amla / nimbu daily — Vitamin C se body khud collagen banata hai, bones ke liye bhi zaroori</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MONDAY ========== -->
+  <section class="day-block" id="mon">
+    <div class="day-header">
+      <span class="day-label">MON</span>
+      <span class="day-focus">Shoulders + Face Reset + Skin Tret</span>
+      <span class="day-number">01</span>
+    </div>
+
+    <div class="slot-grid">
+
+      <div class="slot morning">
+        <div class="slot-time">Morning · 5 min</div>
+        <div class="slot-tag">Face + Depuff</div>
+        <div class="slot-title">WAKE UP RITUAL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot"></span><div><div class="task-text"><strong>Sunlight 15–20 min</strong> — bahar ja, direct sun le</div><div class="task-why">Vitamin D milta hai jo height aur hormones ke liye zaroori hai</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Ice water splash / cold dip</strong> — 1–2 min</div><div class="task-why">Blood circulation improve hoti hai, face puffiness turant kam hoti hai</div></div></li>
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Gua sha / back of spoon</strong> — cheek se ear tak upward strokes, 2 min</div><div class="task-why">Lymphatic drainage promote karta hai, face slim dikhta hai turant</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Stretch: Dead hang 2 min + Cobra 10 reps</strong></div><div class="task-why">Spine decompress hoti hai, posture set hota hai poore din ke liye</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot nutrition">
+        <div class="slot-time">Breakfast</div>
+        <div class="slot-tag">Nutrition + Supps</div>
+        <div class="slot-title">MORNING FUEL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Warm water + lemon</strong> — sabse pehle</div><div class="task-why">Metabolism kick-start karta hai, gut cleanse karta hai</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Oats + milk + nuts / 2–3 eggs (1 yolk max)</strong></div><div class="task-why">High protein breakfast = muscle recovery + face fat burn ka foundation</div></div></li>
+          <li class="task-item"><span class="task-dot"></span><div><div class="task-text"><strong>Glow drink: 1 gajar + ½ chukandar + nimbu blend</strong></div><div class="task-why">Antioxidants, beta-carotene — 2–3 weeks mein visible skin glow aata hai</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Multivitamin + Omega-3</strong> — after breakfast</div><div class="task-why">Collagen supplement body mein amino acids mein toot jaata hai — seedha skin pe nahi jaata. Real collagen = Vitamin C + protein intake se body khud banata hai</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#e8ff47"></span><div><div class="task-text"><strong>Vitamin D3 (1000–2000 IU) + K2 (MK-7, 100mcg)</strong> — fatty meal ke saath</div><div class="task-why">D3 calcium absorb karaata hai bones mein — K2 ensure karta hai calcium arteries mein nahi, sirf bones mein jaaye. Dono sath lo, alag alag kaam nahi karte. Real sunlight better hai, par cloudy/indoor days pe supplement must</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#47ff8c"></span><div><div class="task-text"><strong>Amla (1 fresh / 1 tsp powder) ya nimbu paani</strong> — breakfast ke saath</div><div class="task-why">Vitamin C collagen synthesis ke liye proven — bones ka organic matrix (collagen framework) isi se banta hai. Amla mein 20x vitamin C hai orange se. Supplement se zyada bioavailable hai</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#ffa047"></span><div><div class="task-text"><strong>Calcium Citrate 500mg</strong> — khaane ke saath (zinc/iron se alag waqt lo)</div><div class="task-why">Jaw bone aur cheekbone density ke liye — facial structure long term isi se improve hoti hai. Calcium Citrate better absorb hota hai. 500mg 2 baar split karo (subah + raat) — ek baar mein zyada absorb nahi hota. Roz 2–3 dairy sources lene par supplement half kar sakte ho</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot workout">
+        <div class="slot-time">Workout · 30–40 min</div>
+        <div class="slot-tag">Shoulders Day</div>
+        <div class="slot-title">SHOULDER BLAST</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Pre-workout:</strong> 1 banana ya bread + peanut butter (45 min pehle)</div><div class="task-why">Energy ke liye — khaali pet gym mat karo</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Lateral raises</strong> — 3 sets × 25–30 reps (slow motion)</div><div class="task-why">Shoulder width badhti hai — V-shape ka base yahi hai</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Pike pushups</strong> — 3 sets × 25 reps</div><div class="task-why">Overhead press ka bodyweight version — deltoids target karta hai</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Front raises</strong> — 3 sets × 25 reps</div><div class="task-why">Front delt develop karta hai — chest ke upar wala area</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Post-workout:</strong> Creatine 3g + 3 egg whites / sattu drink (30 min ke andar)</div><div class="task-why">Creatine muscle recovery + strength ke liye scientifically proven hai</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot neck">
+        <div class="slot-time">Evening · 10 min</div>
+        <div class="slot-tag">Neck Build</div>
+        <div class="slot-title">NECK TRAINING</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot" style="background:#ff4fa3"></span><div><div class="task-text"><strong>Neck curls (lying down, head lift)</strong> — 3 × 15 reps slow</div><div class="task-why">Front neck muscles — chin-to-neck ratio improve karta hai, jawline sharper dikhti hai from side</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#ff4fa3"></span><div><div class="task-text"><strong>Neck extensions (prone, head lift)</strong> — 3 × 15 reps</div><div class="task-why">Trap aur posterior neck — thicker neck = more masculine side profile</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#ff4fa3"></span><div><div class="task-text"><strong>Neck isometrics (hand resistance, 4 directions)</strong> — 3 × 10 sec each</div><div class="task-why">Sternocleidomastoid develop karta hai — neck definition ke liye sabse effective exercise</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot face">
+        <div class="slot-time">Evening · 20–30 min</div>
+        <div class="slot-tag">Jaw Build</div>
+        <div class="slot-title">CHEWING SESSION</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Hard chewing gum</strong> — 20–30 min, dono side equal</div><div class="task-why">Masseter muscle work karta hai — jawline wide aur masculine banti hai over time</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#c847ff"></span><div><div class="task-text"><strong>Upgrade: Falim gum (mastic gum) try karo</strong> — regular gum se 3–4x harder</div><div class="task-why">Falim / Mastic gum resistance level bahut zyada hota hai — yahi woh gum hai jo serious jawline improvement ke liye use hota hai. Regular gum zyada soft hota hai long term ke liye. Amazon ya Turkish stores pe milta hai. Jaw pain nahi hona chahiye — agar ho toh wapas regular gum pe jao</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Sprouts / chana + green tea</strong></div><div class="task-why">Green tea mein EGCG hota hai jo slight fat burn karta hai</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Day · 3 min</div>
+        <div class="slot-tag">Skin — AM</div>
+        <div class="slot-title">MORNING SKIN</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash</strong></div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Vitamin C serum — 2–3 drops, pat in gently</strong></div><div class="task-why">Hyperpigmentation aur uneven tone ka #1 fix — tret ke results 2x fast karta hai. Subah lagao, raat nahi</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Niacinamide (10%) — thin layer</strong></div><div class="task-why">Pores tight karta hai, oiliness control karta hai, dark spots fade karta hai — roz use kar sakte ho tret ke saath bhi</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Sunscreen — MANDATORY (SPF 50+)</strong></div><div class="task-why">Bina sunscreen ke poora skin routine waste — tret laga ke bahar gaye toh skin worse hogi</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot nutrition">
+        <div class="slot-time">Lunch</div>
+        <div class="slot-tag">Mid-day Meal</div>
+        <div class="slot-title">LUNCH</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>2 roti / rice + dal/paneer/chicken + salad</strong></div><div class="task-why">Complex carbs + protein combo = sustained energy, no crash</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Fish oil capsule 1</strong></div><div class="task-why">Omega-3 — inflammation kam, skin hydrated, joints healthy</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>10–15 min walk baad mein</strong></div><div class="task-why">Post-meal walk blood sugar spike rokta hai aur metabolism boost karta hai</div></div></li>
+          <li class="task-item"><span class="task-dot"></span><div><div class="task-text"><strong>2 bananas / coconut water</strong> — potassium ke liye</div><div class="task-why">Potassium water retention rok ke face bloating kam karta hai</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot night">
+        <div class="slot-time">Night</div>
+        <div class="slot-tag">Face Exercises</div>
+        <div class="slot-title">NIGHT STRUCTURE</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chin tucks</strong> — 3 sets × 15 reps</div><div class="task-why">Double chin kam karta hai, neck posture fix karta hai — jawline visible hoti hai</div></div></li>
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Fish face hold</strong> — 10 reps × 15–20 sec hold</div><div class="task-why">Cheek muscles tighten hoti hain — hollow cheeks effect aata hai</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#c847ff"></span><div><div class="task-text"><strong>Asymmetry correction — weak side chewing drill</strong> — 5 min (mirror ke saamne)</div><div class="task-why">Apna weak/flat side dekho mirror mein — sirf usi side se chewing gum ya apple 5 min chao. Dono side ka masseter muscle balance ho jaata hai. Ye ek cheez jo facial asymmetry actually improve karti hai over time. Tongue ko bhi weak side ki taraf push karo mewing karte waqt</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Dinner: Paneer/soya/eggs + vegetables (low carb)</strong></div><div class="task-why">Sone se 3 hr pehle heavy carbs band — fat gain rokta hai</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Ashwagandha (optional) + haldi milk</strong></div><div class="task-why">Ashwagandha cortisol (stress hormone) kam karta hai — face puffiness reduce hoti hai</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Night Skin · Day 1</div>
+        <div class="slot-tag">Skin — TRET NIGHT</div>
+        <div class="slot-title">TRETINOIN NIGHT</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → Tretinoin (pea size only)</strong></div><div class="task-why">Tret cell turnover badhaata hai — acne, dark spots, texture sab fix karta hai over time</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Moisturizer over tret</strong></div><div class="task-why">Sandwich method — irritation kam hoti hai, tret ka effect zyada hota hai</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Raat ko ghee / beetroot juice lips pe</strong></div><div class="task-why">Natural lip pink karta hai, dryness hatata hai overnight</div></div></li>
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Sleep 8–9 hrs (10–11 PM tak so ja)</strong></div><div class="task-why">Height growth + face recovery + skin repair SIRF sleep mein hota hai — sabse important hai</div></div></li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- ========== TUESDAY ========== -->
+  <section class="day-block" id="tue">
+    <div class="day-header">
+      <span class="day-label">TUE</span>
+      <span class="day-focus">Back + Skin Recovery</span>
+      <span class="day-number">02</span>
+    </div>
+    <div class="slot-grid">
+
+      <div class="slot morning">
+        <div class="slot-time">Morning</div>
+        <div class="slot-tag">Wake Up</div>
+        <div class="slot-title">MORNING DEPUFF</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot"></span><div><div class="task-text"><strong>Sunlight 15–20 min</strong></div><div class="task-why">Roz ka routine — D3 supplement se better hai real sunlight</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Ice facial / cold water splash</strong> — 2 min</div></div></li>
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Gua sha upward strokes</strong> — 2 min</div></div></li>
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>Dead hang 2 min + Toe stretch 30 sec</strong></div><div class="task-why">Spine stretch daily karo — posture + height ke liye</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot nutrition">
+        <div class="slot-time">Breakfast</div>
+        <div class="slot-tag">Fuel</div>
+        <div class="slot-title">MORNING FUEL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Warm water + lemon → Glow drink → High protein breakfast</strong></div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Multivitamin + Omega-3 + D3+K2</strong> — aaj bhi fatty meal ke saath</div><div class="task-why">D3+K2 daily lo — bones aur hormones dono ke liye. Gap mat karo</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#47ff8c"></span><div><div class="task-text"><strong>Amla ya nimbu — roz zaroori</strong></div><div class="task-why">Vitamin C ke bina collagen synthesis ruk jaati hai — bones + skin + jaw structure sab ispe dependent hai</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Milk / curd / paneer (calcium daily) — 2–3 servings target</strong></div><div class="task-why">Dairy calcium bioavailability best hai. Roz 2–3 servings se approx 600–700mg calcium milta hai — baaki Calcium Citrate supplement se complete karo target tak</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot workout">
+        <div class="slot-time">Workout · 30–40 min</div>
+        <div class="slot-tag">Back Day</div>
+        <div class="slot-title">BACK BUILD</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Dumbbell rows</strong> — 3 sets × 25–30 reps slow</div><div class="task-why">Upper back build karo — V-shape ke liye back width zaroori hai</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Superman pulls</strong> — 3 sets × 25 reps</div><div class="task-why">Lower back strengthen karta hai — posture ke liye game changer</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Wall angels</strong> — 3 sets × 15 reps</div><div class="task-why">Rounded shoulders fix karte hain — jawline automatically zyada visible lagti hai</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Post: Creatine 3g + protein source</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot height">
+        <div class="slot-time">Day Activity</div>
+        <div class="slot-tag">Height Trigger</div>
+        <div class="slot-title">JUMP ACTIVITY</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>Skipping / basketball / running</strong> — 20–30 min</div><div class="task-why">Jumping activities growth plates stimulate karti hain — scientifically supported hai yeh</div></div></li>
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>8–10k steps total — track karo</strong></div><div class="task-why">Daily steps metabolism active rakhte hain — sitting = fat gain</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Day</div>
+        <div class="slot-tag">Skin — AM</div>
+        <div class="slot-title">MORNING SKIN</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → Vitamin C serum → Niacinamide → Sunscreen</strong></div><div class="task-why">Ye 4-step AM routine tret ke results 2x fast karta hai — skip mat karo</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot face">
+        <div class="slot-time">Evening</div>
+        <div class="slot-tag">Jaw + Diet</div>
+        <div class="slot-title">EVENING ROUTINE</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chewing gum 20–30 min (dono side)</strong></div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Low sugar snack — sprouts / chana</strong></div><div class="task-why">Sugar = face puffiness aur acne — avoid karo strictly</div></div></li>
+          <li class="task-item"><span class="task-dot"></span><div><div class="task-text"><strong>Green tea ya black coffee</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot night">
+        <div class="slot-time">Night</div>
+        <div class="slot-tag">Recovery Night</div>
+        <div class="slot-title">NIGHT RESET</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chin tucks 3×15 + Fish face 10×20s</strong></div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Light dinner (paneer/veg, low carb)</strong></div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>ZMA (Zinc + Magnesium) — raat ko</strong></div><div class="task-why">Zinc baalon ke liye, Magnesium deep sleep ke liye — recovery fast hoti hai</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Night Skin · Day 2</div>
+        <div class="slot-tag">Skin — RECOVERY</div>
+        <div class="slot-title">RECOVERY NIGHT</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → Heavy moisturizer only</strong></div><div class="task-why">Kal tret use kiya tha — aaj skin ko recover karne do, koi actives nahi</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Ghee / beetroot lips pe</strong></div></div></li>
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>8–9 hrs sleep — 10–11 PM tak</strong></div></div></li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- ========== WEDNESDAY ========== -->
+  <section class="day-block" id="wed">
+    <div class="day-header">
+      <span class="day-label">WED</span>
+      <span class="day-focus">Chest + Abs + Skin Exfoliation</span>
+      <span class="day-number">03</span>
+    </div>
+    <div class="slot-grid">
+
+      <div class="slot morning">
+        <div class="slot-time">Morning</div>
+        <div class="slot-tag">Daily Reset</div>
+        <div class="slot-title">MORNING RITUAL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot"></span><div><div class="task-text"><strong>Sunlight + Ice water + Gua sha</strong></div></div></li>
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>Dead hang 2 min + Cobra 10 reps + Toe stretch 30s</strong></div><div class="task-why">Wednesday tak posture pattern set ho jaata hai — miss mat karo</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot nutrition">
+        <div class="slot-time">Breakfast</div>
+        <div class="slot-tag">Fuel</div>
+        <div class="slot-title">MORNING FUEL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Warm water + lemon → Glow drink → High protein</strong></div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Multivitamin + Omega-3 (fish oil)</strong></div><div class="task-why">Omega-3 skin inflammation kam karta hai, hair shine aur density improve karta hai — biotin ya collagen supplement se zyada effective hai</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#47ff8c"></span><div><div class="task-text"><strong>Amla / nimbu (Vitamin C source) — daily miss mat karo</strong></div><div class="task-why">Wednesday tak agar Amla daily le rahe ho — 2 hafte mein skin tone change visible hoga. Ye skin ke saath jaw bone collagen matrix bhi build karta hai long term</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#ffa047"></span><div><div class="task-text"><strong>D3+K2 + Calcium Citrate 500mg — khaane ke saath</strong></div><div class="task-why">Bone mass slow game hai — daily consistency = compound effect. Skip karne se calcium absorption ki chain toot jaati hai</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot workout">
+        <div class="slot-time">Workout</div>
+        <div class="slot-tag">Abs + Chest Day</div>
+        <div class="slot-title">CORE + CHEST</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Standard pushups</strong> — 3 × 25–30 reps (slow, chest touch floor)</div><div class="task-why">Chest + anterior deltoid — V-taper ka front view ye banata hai. Shoulder day ke saath combo = complete upper body</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Wide pushups</strong> — 3 × 20 reps (hands wide = outer chest)</div><div class="task-why">Chest width develop karta hai — chest broad dikhti hai from front</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Plank</strong> — 3 sets × max hold (60 sec target)</div><div class="task-why">Core stability = better posture = jawline aur V-taper zyada visible</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Leg raises</strong> — 3 × 25–30 reps</div><div class="task-why">Lower abs — flat stomach ke liye</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Russian twists</strong> — 3 × 30 reps (dono side)</div><div class="task-why">Obliques — waist tight dikhti hai</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Post: Creatine 3g + protein</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot height">
+        <div class="slot-time">Day</div>
+        <div class="slot-tag">Height + Steps</div>
+        <div class="slot-title">ACTIVITY</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>Skipping / running 20–30 min</strong></div></div></li>
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>8–10k steps</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Day</div>
+        <div class="slot-tag">Skin — AM</div>
+        <div class="slot-title">MORNING SKIN</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → Vitamin C → Niacinamide → Sunscreen</strong></div><div class="task-why">AHA raat ko lagaoge — subah Vit C aur SPF mandatory hai sun sensitivity ke liye</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot face">
+        <div class="slot-time">Evening</div>
+        <div class="slot-tag">Jaw</div>
+        <div class="slot-title">JAW SESSION</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chewing gum 20–30 min</strong></div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Green tea + light snack</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot night">
+        <div class="slot-time">Night</div>
+        <div class="slot-tag">Face Exercises</div>
+        <div class="slot-title">FACE NIGHT</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chin tucks + Fish face (dono 3 sets)</strong></div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#c847ff"></span><div><div class="task-text"><strong>Asymmetry correction drill (Week 2 check)</strong> — weak side chewing 5 min</div><div class="task-why">Mirror mein compare karo — kaun sa cheek flatter hai, kaun si side ka jaw zyada underdeveloped hai. Sirf usi side se 5 min chao aaj. Tongue push bhi weak side ki taraf karo mewing mein. Consistency se 4–6 hafte mein balance improve hota hai</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Dinner light — protein + veg</strong></div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Ashwagandha optional + haldi milk</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Night Skin · Day 3</div>
+        <div class="slot-tag">Skin — EXFOLIATION</div>
+        <div class="slot-title">PEEL NIGHT</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → AHA/BHA peel (10 min) → Wash off → Moisturizer</strong></div><div class="task-why">AHA dead skin cells hataata hai, BHA pores mein jaata hai — combined se skin texture smooth, acne kam</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>No tret aaj — peel ke saath mix mat karo</strong></div><div class="task-why">Over-exfoliation skin barrier damage karta hai</div></div></li>
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Sleep 8–9 hrs</strong></div></div></li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- ========== THURSDAY ========== -->
+  <section class="day-block" id="thu">
+    <div class="day-header">
+      <span class="day-label">THU</span>
+      <span class="day-focus">Arms + Skin Tret Round 2</span>
+      <span class="day-number">04</span>
+    </div>
+    <div class="slot-grid">
+
+      <div class="slot morning">
+        <div class="slot-time">Morning</div>
+        <div class="slot-tag">Daily Reset</div>
+        <div class="slot-title">MORNING RITUAL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot"></span><div><div class="task-text"><strong>Sunlight + Ice splash + Gua sha</strong></div></div></li>
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>Dead hang 2 min + Cobra + Toe stretch</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot nutrition">
+        <div class="slot-time">Breakfast</div>
+        <div class="slot-tag">Fuel</div>
+        <div class="slot-title">MORNING FUEL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Full protocol — warm water, glow drink, protein breakfast</strong></div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Multivitamin + Omega-3 + D3+K2</strong></div><div class="task-why">D3+K2 daily — aaj Tret night hai, skin repair ke saath bone metabolism bhi active rahega</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#47ff8c"></span><div><div class="task-text"><strong>Amla / nimbu — aaj bhi</strong></div><div class="task-why">Roz Vitamin C = roz collagen synthesis — skin aur bone dono ke liye ek hi kaam karta hai</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#ffa047"></span><div><div class="task-text"><strong>Calcium Citrate 500mg — khaane ke saath</strong></div><div class="task-why">D3 absorb hua toh calcium bhi absorb hoga — aaj dono sath lo</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot workout">
+        <div class="slot-time">Workout</div>
+        <div class="slot-tag">Arms Day</div>
+        <div class="slot-title">ARMS SESSION</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Bicep curls (SLOW — 3 sec up, 3 sec down)</strong> — 3 × 25–30</div><div class="task-why">Slow reps muscle time under tension badhaate hain — bina heavy weight ke bhi effective hai</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Diamond pushups</strong> — 3 × 25 reps</div><div class="task-why">Triceps + chest inner portion target karta hai — arms defined lagte hain</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Tricep dips</strong> (chair/bench) — 3 × 25–30</div><div class="task-why">Tricep arms ka 2/3 hissa hai — isko build karo agar arms bade chahiye</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Post: Creatine 3g + protein</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot height">
+        <div class="slot-time">Day</div>
+        <div class="slot-tag">Activity</div>
+        <div class="slot-title">STEPS + JUMP</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>Jump rope / basketball — 20 min</strong></div></div></li>
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>8–10k steps</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Day</div>
+        <div class="slot-tag">Skin — AM</div>
+        <div class="slot-title">MORNING SKIN</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → Vitamin C → Niacinamide → Sunscreen</strong></div><div class="task-why">Tret night tha aaj — subah SPF double important hai. Vit C + tret combo = fastest results</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot neck">
+        <div class="slot-time">Evening · 10 min</div>
+        <div class="slot-tag">Neck Build</div>
+        <div class="slot-title">NECK SESSION</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot" style="background:#ff4fa3"></span><div><div class="task-text"><strong>Neck curls + Neck extensions</strong> — 3 × 15 each</div><div class="task-why">Mon + Thu = 2x/week neck — consistency se 6-8 hafte mein side profile dramatically better hogi</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#ff4fa3"></span><div><div class="task-text"><strong>Neck isometrics (4 directions)</strong> — 3 × 10 sec</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot face">
+        <div class="slot-time">Evening</div>
+        <div class="slot-tag">Jaw + Nutrition</div>
+        <div class="slot-title">EVENING FLOW</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chewing gum 20–30 min</strong></div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Lunch + 10–15 min post meal walk</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot night">
+        <div class="slot-time">Night</div>
+        <div class="slot-tag">Face + Supps</div>
+        <div class="slot-title">NIGHT PROTOCOL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chin tucks 3×15 + Fish face 10×20s</strong></div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>ZMA supplement raat ko</strong></div><div class="task-why">Zinc + Magnesium — deep sleep, testosterone, recovery. Magnesium bone metabolism mein bhi role hai</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#ffa047"></span><div><div class="task-text"><strong>Calcium Citrate 500mg (raat wali dose) — dinner ke saath</strong></div><div class="task-why">Daily total 1000mg Calcium complete karo — subah 500 + raat 500. ZMA ke saath nahi lo, 30 min gap rakho kyunki calcium zinc absorption block karta hai</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Light dinner + haldi milk</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Night Skin · Day 4</div>
+        <div class="slot-tag">Skin — TRET ROUND 2</div>
+        <div class="slot-title">TRETINOIN NIGHT</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → Tretinoin (pea size) → Moisturizer</strong></div><div class="task-why">Week mein 2 baar tret use karo — zyada use = irritation, peeling, skin barrier damage</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Ghee / beetroot on lips</strong></div></div></li>
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Sleep 8–9 hrs</strong></div></div></li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- ========== FRIDAY ========== -->
+  <section class="day-block" id="fri">
+    <div class="day-header">
+      <span class="day-label">FRI</span>
+      <span class="day-focus">Legs + Skin Recovery Round 2</span>
+      <span class="day-number">05</span>
+    </div>
+    <div class="slot-grid">
+
+      <div class="slot morning">
+        <div class="slot-time">Morning</div>
+        <div class="slot-tag">Daily Reset</div>
+        <div class="slot-title">MORNING RITUAL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot"></span><div><div class="task-text"><strong>Sunlight + Ice water + Gua sha</strong></div></div></li>
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>Dead hang + Cobra + Toe stretch</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot nutrition">
+        <div class="slot-time">Breakfast</div>
+        <div class="slot-tag">Fuel</div>
+        <div class="slot-title">MORNING FUEL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Full protocol — glow drink + protein</strong></div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Multivitamin + Omega-3 + D3+K2 + Calcium Citrate 500mg</strong></div><div class="task-why">Calcium ki daily requirement bones ke liye zaroori hai — dairy se best milti hai, supplement gap fill karta hai</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#47ff8c"></span><div><div class="task-text"><strong>Amla / nimbu — daily ritual maintain karo</strong></div><div class="task-why">Friday tak agar roz Vitamin C liya — skin mein difference dikhna shuru ho jaata hai. Bones ke liye 3–6 month ka game hai</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot workout">
+        <div class="slot-time">Workout</div>
+        <div class="slot-tag">Legs Day</div>
+        <div class="slot-title">LEG DAY</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Squats</strong> — 3 × 25–30 reps (slow, full depth)</div><div class="task-why">Largest muscle group hai — jitna train karoge utna metabolism fast hoga, GH release zyada hoga</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Lunges</strong> — 3 × 25 reps each leg</div><div class="task-why">Quad + glute balance banata hai — posture improve hoti hai</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Glute bridge</strong> — 3 × 30 reps (squeeze at top)</div><div class="task-why">Posterior chain — lower back aur glutes strong = better standing posture = taller look</div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Post: Creatine 3g + protein</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot height">
+        <div class="slot-time">Day</div>
+        <div class="slot-tag">Height</div>
+        <div class="slot-title">JUMP + STEPS</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>Skipping / basketball 20 min + 8–10k steps</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Day</div>
+        <div class="slot-tag">Skin — AM</div>
+        <div class="slot-title">MORNING SKIN</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → Vitamin C → Niacinamide → Sunscreen (NO SKIP)</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot face">
+        <div class="slot-time">Evening</div>
+        <div class="slot-tag">Jaw + Ice</div>
+        <div class="slot-title">FACE SHARP</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chewing gum 20–30 min</strong></div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Ice facial (2–3 times/week se ek aaj)</strong> — 2 min max</div><div class="task-why">Ice blood vessels contract karta hai — face tighter, pores smaller, puffiness kam</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot night">
+        <div class="slot-time">Night</div>
+        <div class="slot-tag">Face + Rest</div>
+        <div class="slot-title">NIGHT WRAP</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chin tucks + Fish face</strong></div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Dinner light + haldi milk</strong></div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Ashwagandha optional</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Night Skin · Day 5</div>
+        <div class="slot-tag">Skin — RECOVERY</div>
+        <div class="slot-title">RECOVERY NIGHT</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → Heavy moisturizer only</strong></div><div class="task-why">Kal tret tha — aaj recovery. Skin ko breathe karne do.</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Ghee / beetroot juice lips pe — raat ko</strong></div><div class="task-why">Lips raat ko repair hoti hain — daily lagao, 2–3 hafte mein naturally pink aur soft ho jaati hain</div></div></li>
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Sleep 8–9 hrs</strong></div></div></li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- ========== SATURDAY ========== -->
+  <section class="day-block" id="sat">
+    <div class="day-header">
+      <span class="day-label">SAT</span>
+      <span class="day-focus">Mobility + Posture + Skin Light Care</span>
+      <span class="day-number">06</span>
+    </div>
+    <div class="slot-grid">
+
+      <div class="slot morning">
+        <div class="slot-time">Morning</div>
+        <div class="slot-tag">Reset</div>
+        <div class="slot-title">MORNING RITUAL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot"></span><div><div class="task-text"><strong>Sunlight + Cold water + Gua sha</strong></div></div></li>
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>Dead hang 3 min + Full stretch (cobra, hip flexors, hamstrings)</strong></div><div class="task-why">Saturday = full body stretch day — recovery aur posture dono improve hote hain</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot nutrition">
+        <div class="slot-time">Breakfast</div>
+        <div class="slot-tag">Fuel</div>
+        <div class="slot-title">MORNING FUEL</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Full morning nutrition protocol</strong></div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Full supplement stack</strong> — D3+K2, Calcium Citrate, Multivitamin, Omega-3</div><div class="task-why">Saturday = weekly supplement audit karo — koi missing nahi tha is week? D3+K2 aur Calcium roz liye? Amla daily raha? Agar nahi — next week se gap mat aane do</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#47ff8c"></span><div><div class="task-text"><strong>Amla ya nimbu — aaj bhi</strong></div><div class="task-why">Saturday ka jawline sharpness Sunday se better hoga agar consistently sab le rahe ho — no cope, just biology</div></div></li>
+          <li class="task-item"><span class="task-dot" style="background:#ff4747"></span><div><div class="task-text"><strong>Weekly Bone-Load Check</strong> — is hafte jump activities kiye? (skipping, basketball, running)</div><div class="task-why">Bones mechanical load se stimulate hoti hain — jumping activities growth plates pe stress dete hain. Calcium + D3 leke baitha rahe toh bones absorb nahi karengi — load zaroori hai. Har hafte minimum 4 din jumping activity honi chahiye</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot workout">
+        <div class="slot-time">Workout</div>
+        <div class="slot-tag">Mobility + Recovery</div>
+        <div class="slot-title">MOBILITY + POSTURE</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Thoracic spine rotations</strong> — 2 × 10 each side (fist under chin, rotate)</div><div class="task-why">Rounded upper back fix karta hai — jawline aur posture dono pe immediate visible effect</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Hip flexor stretch (lunge hold)</strong> — 2 × 45 sec each side</div><div class="task-why">Tight hip flexors = anterior pelvic tilt = forward lean = looks shorter. Ye fix karo</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Hamstring stretch + pigeon pose</strong> — 2 min each</div><div class="task-why">Leg day recovery + posture chain repair</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Chin tucks (exercise form)</strong> — 3 × 15 reps</div><div class="task-why">Cervical alignment fix karta hai — jawline aur neck automatically better dikhti hai</div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>Wall posture drill</strong> — 3 × 30 sec (head, shoulders, glutes, heels wall se touch)</div><div class="task-why">Perfect posture template memory banata hai body ko</div></div></li>
+          <li class="task-item"><span class="task-dot red"></span><div><div class="task-text"><strong>Skipping / walk 20–30 min + 8–10k steps</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot face">
+        <div class="slot-time">Evening</div>
+        <div class="slot-tag">Jaw + Hydration</div>
+        <div class="slot-title">FACE SESSION</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chewing gum 20–30 min</strong></div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Ice facial (2–3x/week — ek aaj)</strong> — 2 min</div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Day</div>
+        <div class="slot-tag">Skin — AM</div>
+        <div class="slot-title">MORNING SKIN</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → Vitamin C → Niacinamide → Sunscreen</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot night">
+        <div class="slot-time">Night</div>
+        <div class="slot-tag">Light Night</div>
+        <div class="slot-title">WIND DOWN</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Chin tucks + Fish face</strong></div></div></li>
+          <li class="task-item"><span class="task-dot green"></span><div><div class="task-text"><strong>Dinner light</strong></div></div></li>
+          <li class="task-item"><span class="task-dot orange"></span><div><div class="task-text"><strong>ZMA + haldi milk</strong></div></div></li>
+        </ul>
+      </div>
+
+      <div class="slot skin">
+        <div class="slot-time">Night Skin · Day 6</div>
+        <div class="slot-tag">Skin — LIGHT CARE</div>
+        <div class="slot-title">PEPTIDE NIGHT</div>
+        <ul class="task-list">
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Face wash → Peptide serum → Moisturizer</strong></div><div class="task-why">Active-free night — peptides collagen synthesis support karte hain bina irritation ke</div></div></li>
+          <li class="task-item"><span class="task-dot blue"></span><div><div class="task-text"><strong>Beetroot mask (optional) — 10 min, rinse off</strong></div><div class="task-why">Natural antioxidants — glow aur slight brightening effect deta hai</div></div></li>
+          <li class="task-item"><span class="task-dot purple"></span><div><div class="task-text"><strong>Sleep 8–9 hrs early</strong></div></div></li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- ========== SUNDAY ========== -->
+  <section class="day-block" id="sun">
+    <div class="day-header">
+      <span class="day-label">SUN</span>
+      <span class="day-focus">Full Rest + Skin Day Off</span>
+      <span class="day-number">07</span>
+    </div>
+    <div class="rest-block">
+      <span class="rest-big">REST</span>
+      <p class="rest-msg">
+        Workout rest day — muscles repair aur grow hote hain SIRF rest mein, gym mein nahi.<br><br>
+        <strong style="color:#f0f0f0;">Still karo (5 cheezy):</strong><br>
+        ☀️ Sunlight 15–20 min &nbsp;|&nbsp; 💧 3–4L paani &nbsp;|&nbsp; 👅 Mewing + nose breathing 24/7<br>
+        🧍 Posture check &nbsp;|&nbsp; 😴 8–9 hrs sleep (sone se 1 hr pehle phone band)<br>
+        🍋 <strong style="color:#f0f0f0;">Amla / nimbu — Sunday bhi miss mat karo</strong> — yahi daily chain hai jo compound karta hai<br>
+        🦴 <strong style="color:#f0f0f0;">D3+K2 + Calcium Citrate 500mg (subah)</strong> + raat ko 500mg — bones ko Sunday nahi pata<br>
+        🏀 <strong style="color:#f0f0f0;">Light walk / 5k steps bhi chalega</strong> — complete rest nahi, bone load thoda maintain karo<br><br>
+        <strong style="color:#f0f0f0;">Skin Day 7 — REST:</strong><br>
+        Sirf sunscreen (agar bahar ja rahe ho). Optional: beetroot face mask 10 min.<br>
+        Koi actives nahi. Skin ko full rest do — yeh weekly cycle ka reset hai.<br><br>
+        <strong style="color:#f0f0f0;">Nutrition aaj bhi same:</strong> High protein, low sugar, low salt, potassium (banana/coconut water)
+      </p>
+    </div>
+  </section>
+
+  <div class="sep"></div>
+
+  <!-- RESULT TIMELINE -->
+  <section class="reality-section">
+    <div class="reality-title">⏳ RESULT TIMELINE (No Overhype)</div>
+    <div class="reality-grid">
+      <div class="reality-card">
+        <div class="week">1–2 WEEKS</div>
+        <div class="desc">Face puffiness kam hogi. Freshness aayegi. Routine feel hogi.</div>
+      </div>
+      <div class="reality-card">
+        <div class="week">2–4 WEEKS</div>
+        <div class="desc">Skin glow visible. Posture better. Energy levels up. Jawline slightly sharper.</div>
+      </div>
+      <div class="reality-card">
+        <div class="week">1–2 MONTHS</div>
+        <div class="desc">Visible muscle definition. Cheekbones sharper. Skin texture improved. Height posture gain.</div>
+      </div>
+      <div class="reality-card">
+        <div class="week">3–6 MONTHS</div>
+        <div class="desc">Proper model face structure. V-shape torso. Clear skin. Maximum height realized.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEVER DO -->
+  <div class="never-section">
+    <div class="never-title">🚫 NEVER DO</div>
+    <div class="never-list">
+      <span class="never-item">❌ Bonesmashing — actual risk hai, koi benefit nahi</span>
+      <span class="never-item">❌ Over chewing — jaw pain aa jaayega</span>
+      <span class="never-item">❌ Mouth breathing — face structure damage karta hai</span>
+      <span class="never-item">❌ Tret + AHA same night — over-exfoliation</span>
+      <span class="never-item">❌ Sunscreen skip — poora skin routine waste</span>
+      <span class="never-item">❌ 5 hrs sleep — growth ruk jaati hai</span>
+      <span class="never-item">❌ Supplement overstack — 3–4 core enough hain</span>
+      <span class="never-item">❌ Junk + sugar daily — face fat nahi jaayega</span>
+    </div>
+  </div>
+
+  <!-- UNLISTED SECRETS -->
+  <div style="margin-top:40px; padding: 32px; background: #0d0d0d; border: 1px solid #1a1a1a; border-left: 3px solid #e8ff47;">
+    <div style="font-family:'Bebas Neue',sans-serif; font-size:28px; color:#e8ff47; letter-spacing:3px; margin-bottom:6px;">⚡ UNLISTED SECRETS</div>
+    <div style="font-family:'Space Mono',monospace; font-size:9px; color:#555; letter-spacing:3px; margin-bottom:24px;">JO LOG NAHI BATATE — WO YE HAI</div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap:12px;">
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #ff6b35;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#ff6b35; letter-spacing:2px; margin-bottom:8px;">SECRET 01 · POSTURE = INSTANT +2CM & JAWLINE</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Sirf chin back karo aur chest up karo — jawline immediately zyada defined dikhti hai. Double chin virtually disappear ho jaata hai. Ye ek cheez jo log ignore karte hain, photogenic look ke liye sabse powerful hai.</div>
+      </div>
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #47c8ff;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#47c8ff; letter-spacing:2px; margin-bottom:8px;">SECRET 02 · NAMAK BAND = 3 DIN MEIN DEBLOAT</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Sodium water retain karta hai — face puffy dikhta hai. Sirf 3 din ke liye namak bahut kam kar do. Cheekbones automatically zyada prominent dikhne lagenge. Ye sabse underrated face transformation hai.</div>
+      </div>
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #c847ff;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#c847ff; letter-spacing:2px; margin-bottom:8px;">SECRET 03 · NEEND KI POSITION MATTER KARTI HAI</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Side pe soone se face asymmetry aur puffiness ek side pe zyada aati hai. Back sleep — pillow neck ke neeche — teri facial symmetry long term mein improve karta hai aur skin creasing kam hoti hai.</div>
+      </div>
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #47ff8c;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#47ff8c; letter-spacing:2px; margin-bottom:8px;">SECRET 04 · SUNLIGHT SKIN SE ZYADA KAAM KARTA HAI</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Morning sunlight 15–20 min cortisol reset karta hai, serotonin badhata hai, neend better hoti hai raat ko — aur testosterone levels pe bhi positive effect hai. Ye ek habit pure body chemistry change kar deti hai.</div>
+      </div>
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #ff4747;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#ff4747; letter-spacing:2px; margin-bottom:8px;">SECRET 05 · SUGAR = FACE FAT KA #1 CAUSE</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Gym karo ya na karo — agar daily sugar lete ho toh face fat nahi jayega. Sugar insulin spike karta hai jo fat storage trigger karta hai specifically face aur belly pe. Cold drinks, biscuits, mithai — ye sab sabse pehle band karo.</div>
+      </div>
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #ffa047;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#ffa047; letter-spacing:2px; margin-bottom:8px;">SECRET 06 · EXPRESSIONS TRAIN KARO</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Photos mein bekar isliye lagte hain kyunki expression practice nahi ki. Mirror ke saamne slight jaw clench + smize (eyes se smile) practice karo. 2 hafte mein natural photogenic expression set ho jaata hai — ye models karte hain.</div>
+      </div>
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #e8ff47;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#e8ff47; letter-spacing:2px; margin-bottom:8px;">SECRET 07 · LIGHTING = 80% OF HOW YOU LOOK</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Same face, different lighting — completely different results. Natural light from window ke saamne khado — face ka ek side illuminate hota hai, shadows jawline define karte hain. Harsh overhead light avoid karo. Ye cheez genuinely teri attractiveness instantly double kar deti hai.</div>
+      </div>
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #47c8ff;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#47c8ff; letter-spacing:2px; margin-bottom:8px;">SECRET 08 · PROTEIN SE SKIN BANTI HAI</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Collagen supplement waste hai — body digest karke amino acids mein tod deta hai. Real collagen body khud banata hai protein + Vitamin C se. Roz 80–100g protein kha aur nimbu / amla le — skin results supplement se 10x better honge.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PROGRESSION SYSTEM -->
+  <div style="margin-top:40px; padding: 32px; background: #0d0d0d; border: 1px solid #1a1a1a; border-left: 3px solid #47ff8c;">
+    <div style="font-family:'Bebas Neue',sans-serif; font-size:28px; color:#47ff8c; letter-spacing:3px; margin-bottom:6px;">📈 PROGRESSION SYSTEM</div>
+    <div style="font-family:'Space Mono',monospace; font-size:9px; color:#555; letter-spacing:3px; margin-bottom:24px;">KAB BADHANA HAI, KAB RUKNA HAI</div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap:12px;">
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #47ff8c;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#47ff8c; letter-spacing:2px; margin-bottom:8px;">PROGRESSIVE OVERLOAD RULE</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Agar current reps comfortable lag rahe hain (last set mein bhi struggle nahi) toh next week reps 5 badha do ya weight badha do. Same workout same weight = zero progress. Har 2 hafte mein minimum ek cheez badhaao.</div>
+      </div>
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #e8ff47;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#e8ff47; letter-spacing:2px; margin-bottom:8px;">DELOAD WEEK (EVERY 6–8 WEEKS)</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Har 6–8 hafte mein ek deload week karo — sets/reps half kar do, intensity kam karo. Ye weakness nahi hai — yahi waqt hai jab body actually adapt karti hai aur muscles grow karte hain. Skip karne se overtraining aur injury aati hai.</div>
+      </div>
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #ff6b35;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#ff6b35; letter-spacing:2px; margin-bottom:8px;">SKIN PROGRESSION — TRET UPGRADE</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">0.025% se start kiya — 3 months baad agar koi irritation nahi toh 0.05% try karo. Iske 3 months baad 0.1% try kar sakte ho. Jaldi jump mat karo — skin barrier damage hoti hai. Patience = better long-term results.</div>
+      </div>
+
+      <div style="background:#111; border:1px solid #222; padding:18px; border-left:3px solid #47c8ff;">
+        <div style="font-family:'Space Mono',monospace; font-size:9px; color:#47c8ff; letter-spacing:2px; margin-bottom:8px;">MONTHLY PHOTO CHECK</div>
+        <div style="font-size:12px; color:#bbb; line-height:1.7;">Har mahine same lighting mein same angle se photo lo — front + side profile. Day to day changes dikhte nahi hain, monthly comparison mein dikhte hain. Ye hi sabse accurate progress tracker hai. Mirror lie karta hai, photos nahi.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GOLDEN FORMULA -->
+  <div style="text-align:center; padding: 60px 24px 20px;">
+    <div style="font-family:'Space Mono',monospace; font-size:10px; letter-spacing:4px; color:var(--muted); margin-bottom:16px;">GOLDEN FORMULA</div>
+    <div style="font-family:'Bebas Neue',sans-serif; font-size:clamp(18px,4vw,32px); color:var(--accent); letter-spacing:2px; line-height:1.4;">
+      SLEEP + PROTEIN + SUNLIGHT + POSTURE + MEWING + LOW FAT + WATER<br>= MODEL FACE & BODY
+    </div>
+    <div style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); margin-top:20px; letter-spacing:2px;">
+      SUPPLEMENTS = 20% &nbsp;·&nbsp; DIET + HABITS + CONSISTENCY = 80%
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // Active nav pill on scroll
+  const sections = document.querySelectorAll('.day-block, #sun');
+  const pills = document.querySelectorAll('.day-pill');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        pills.forEach(p => p.classList.remove('active'));
+        const id = entry.target.id;
+        const active = document.querySelector(`.day-pill[href="#${id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3, rootMargin: '-100px 0px -50% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Stagger card animations
+  const slots = document.querySelectorAll('.slot');
+  const slotObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        entry.target.style.animationDelay = '0ms';
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+        slotObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  slots.forEach((slot, i) => {
+    slot.style.opacity = '0';
+    slot.style.transform = 'translateY(16px)';
+    slot.style.transition = `opacity 0.4s ease ${(i % 4) * 80}ms, transform 0.4s ease ${(i % 4) * 80}ms`;
+    slotObserver.observe(slot);
+  });
+</script>
+</body>
+</html>
